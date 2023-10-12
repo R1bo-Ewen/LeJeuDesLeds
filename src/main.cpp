@@ -14,20 +14,12 @@
 #define LED6 13
 #define numLeds 6
 
-const int BUTTONS[numLeds] = {BUTTON1, BUTTON2, BUTTON3, BUTTON4, BUTTON5, BUTTON6};
-const int LEDS[numLeds] = {LED1, LED2, LED3, LED4, LED5, LED6};
-
-bool ledStates[numLeds];
-bool buttonStates[numLeds];
-bool lastButtonStates[numLeds];
-
-unsigned long lastDebounceTimes[numLeds];
-const unsigned long debounceDelay = 50;
+int BUTTONS[numLeds] = {BUTTON1, BUTTON2, BUTTON3, BUTTON4, BUTTON5, BUTTON6};
+int LEDS[numLeds] = {LED1, LED2, LED3, LED4, LED5, LED6};
 
 
 // put function declarations here:
-void randomizeStates();
-
+// int myFunction(int, int);
 
 void setup() {
 
@@ -35,47 +27,16 @@ void setup() {
   {
     pinMode(BUTTONS[i], INPUT_PULLUP);
     pinMode(LEDS[i], OUTPUT);
-    lastButtonStates[i] = false;
-    lastDebounceTimes[i] = 0;
   }
 
-  randomizeStates();
-
 }
-
 
 void loop() {
 
   for (int i = 0; i < numLeds; i++)
   {
-    bool currentButtonPressed = digitalRead(BUTTONS[i]);
-
-    if (currentButtonPressed != lastButtonStates[i]) {
-      lastDebounceTimes[i] = millis();
-    }
-
-    if (millis() - lastDebounceTimes[i] > debounceDelay) {
-      if (currentButtonPressed != buttonStates[i]) {
-        buttonStates[i] = currentButtonPressed;
-        if (currentButtonPressed == true) {
-          ledStates[i] = !ledStates[i];
-        }
-      }
-    }
-
-    lastButtonStates[i] = currentButtonPressed;
-
-    digitalWrite(LEDS[i], !ledStates[i]);
-  }
-}
-
-
-void randomizeStates() {
-
-  for (int i = 0; i < numLeds; i++)
-  {
-    randomSeed(analogRead(0));
-    ledStates[i] = random(0, 2);
+    bool buttonPressed = digitalRead(BUTTONS[i]);
+    digitalWrite(LEDS[i], !buttonPressed);
   }
 
 }
