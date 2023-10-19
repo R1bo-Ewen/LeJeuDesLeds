@@ -18,7 +18,6 @@ const int BUTTONS[numLeds] = {BUTTON1, BUTTON2, BUTTON3, BUTTON4, BUTTON5, BUTTO
 const int LEDS[numLeds] = {LED1, LED2, LED3, LED4, LED5, LED6};
 
 bool ledState[numLeds];
-bool buttonState[numLeds];
 bool lastButtonState[numLeds];
 
 unsigned long lastDebounceTime[numLeds];
@@ -27,9 +26,12 @@ const unsigned long debounceDelay = 50;
 
 // put function declarations here:
 void randomizeLedStates();
+bool isDebounceDelayOver(int i);
+bool hasButtonStateChanged(bool currentState, int i);
 
 
 void setup() {
+  Serial.begin(115200);
 
   for (int i = 0; i < numLeds; i++)
   {
@@ -40,30 +42,24 @@ void setup() {
   }
 
   randomizeLedStates();
-
 }
 
 
 void loop() {
-
   for (int i = 0; i < numLeds; i++)
   {
-    bool currentButtonPressed = digitalRead(BUTTONS[i]);
+    bool isButtonPressed = !digitalRead(BUTTONS[i]);
 
-    if (currentButtonPressed != lastButtonState[i]) {
-      lastDebounceTime[i] = millis();
-    }
+    if (hasButtonStateChanged(isButtonPressed, i) && isDebounceDelayOver(i))
+    {
+        lastButtonState[i] = isButtonPressed;
+        lastDebounceTime[i] = millis();
 
-    if (millis() - lastDebounceTime[i] > debounceDelay) {
-      if (currentButtonPressed != buttonState[i]) {
-        buttonState[i] = currentButtonPressed;
-        if (currentButtonPressed == true) {
+        if (isButtonPressed == true)
+        {
           ledState[i] = !ledState[i];
         }
-      }
     }
-
-    lastButtonState[i] = currentButtonPressed;
 
     digitalWrite(LEDS[i], !ledState[i]);
   }
@@ -71,11 +67,26 @@ void loop() {
 
 
 void randomizeLedStates() {
-
   for (int i = 0; i < numLeds; i++)
   {
     randomSeed(analogRead(0));
     ledState[i] = random(0, 2);
   }
 
+}
+
+bool isDebounceDelayOver(int i) {
+  if (millis() - lastDebounceTime[i] > debounceDelay) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool hasButtonStateChanged(bool currentState, int i) {
+  if (currentState != lastButtonState[i]) {
+    return true;
+  } else {
+    return false;
+  }
 }
