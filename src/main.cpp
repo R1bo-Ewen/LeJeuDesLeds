@@ -17,16 +17,16 @@
 const int BUTTONS[numLeds] = {BUTTON1, BUTTON2, BUTTON3, BUTTON4, BUTTON5, BUTTON6};
 const int LEDS[numLeds] = {LED1, LED2, LED3, LED4, LED5, LED6};
 
-bool ledStates[numLeds];
-bool buttonStates[numLeds];
-bool lastButtonStates[numLeds];
+bool ledState[numLeds];
+bool buttonState[numLeds];
+bool lastButtonState[numLeds];
 
-unsigned long lastDebounceTimes[numLeds];
+unsigned long lastDebounceTime[numLeds];
 const unsigned long debounceDelay = 50;
 
 
 // put function declarations here:
-void randomizeStates();
+void randomizeLedStates();
 
 
 void setup() {
@@ -35,11 +35,11 @@ void setup() {
   {
     pinMode(BUTTONS[i], INPUT_PULLUP);
     pinMode(LEDS[i], OUTPUT);
-    lastButtonStates[i] = false;
-    lastDebounceTimes[i] = 0;
+    lastButtonState[i] = false;
+    lastDebounceTime[i] = 0;
   }
 
-  randomizeStates();
+  randomizeLedStates();
 
 }
 
@@ -50,32 +50,32 @@ void loop() {
   {
     bool currentButtonPressed = digitalRead(BUTTONS[i]);
 
-    if (currentButtonPressed != lastButtonStates[i]) {
-      lastDebounceTimes[i] = millis();
+    if (currentButtonPressed != lastButtonState[i]) {
+      lastDebounceTime[i] = millis();
     }
 
-    if (millis() - lastDebounceTimes[i] > debounceDelay) {
-      if (currentButtonPressed != buttonStates[i]) {
-        buttonStates[i] = currentButtonPressed;
+    if (millis() - lastDebounceTime[i] > debounceDelay) {
+      if (currentButtonPressed != buttonState[i]) {
+        buttonState[i] = currentButtonPressed;
         if (currentButtonPressed == true) {
-          ledStates[i] = !ledStates[i];
+          ledState[i] = !ledState[i];
         }
       }
     }
 
-    lastButtonStates[i] = currentButtonPressed;
+    lastButtonState[i] = currentButtonPressed;
 
-    digitalWrite(LEDS[i], !ledStates[i]);
+    digitalWrite(LEDS[i], !ledState[i]);
   }
 }
 
 
-void randomizeStates() {
+void randomizeLedStates() {
 
   for (int i = 0; i < numLeds; i++)
   {
     randomSeed(analogRead(0));
-    ledStates[i] = random(0, 2);
+    ledState[i] = random(0, 2);
   }
 
 }
