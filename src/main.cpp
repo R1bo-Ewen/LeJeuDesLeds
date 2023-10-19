@@ -33,18 +33,10 @@ void refreshLeds();
 
 void setup() {
   Serial.begin(115200);
-  randomSeed(analogRead(0));
   for (int i = 0; i < numLeds; i++)
   {
-    long light = random(2);
     pinMode(BUTTONS[i], INPUT_PULLUP);
     pinMode(LEDS[i], OUTPUT);
-    if (light){
-      digitalWrite(LEDS[i], HIGH);
-    }
-    else{
-      digitalWrite(LEDS[i], LOW);
-    }
     lastButtonState[i] = false;
     lastDebounceTime[i] = 0;
   }
@@ -54,9 +46,6 @@ void setup() {
 }
 
 void loop() {
-  for (int i = 0; i < numLeds; i++){
-
-  }
   for (int i = 0; i < numLeds; i++)
   {
     bool currentButtonPressed = digitalRead(BUTTONS[i]);
