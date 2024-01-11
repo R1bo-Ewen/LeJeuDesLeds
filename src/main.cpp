@@ -55,7 +55,6 @@ void setup() {
     lastButtonState[i] = false;
     lastDebounceTime[i] = 0;
   }
-  Serial.begin(9600);
 }
 
 
