@@ -21,6 +21,12 @@ const int LEDS[numLeds] = {LED1, LED2, LED3, LED4, LED5, LED6};
 bool ledState[numLeds];
 bool buttonState[numLeds];
 bool lastButtonState[numLeds];
+bool gameOn = false;
+bool startOn = true;
+float startTime;
+float endTime;
+float timePassed;
+int score;
 
 unsigned long lastDebounceTime[numLeds];
 const unsigned long debounceDelay = 50;
@@ -31,6 +37,15 @@ bool hasButtonStateChanged(bool currentState, int i);
 bool isDebounceDelayOver(int i);
 void refreshLeds();
 bool checkLedsState();
+void LedsGame();
+void startsBlink();
+void startNewLevel();
+void levelsBlink();
+void endsBlink();
+void endGame();
+void displayScore();
+void resetLedsState();
+void pause(float time);
 
 
 void setup() {
@@ -40,12 +55,81 @@ void setup() {
     lastButtonState[i] = false;
     lastDebounceTime[i] = 0;
   }
-
-  randomizeLedStates();
+  Serial.begin(9600);
 }
 
 
 void loop() {
+  if (gameOn){
+    LedsGame();
+  }
+  else{
+    if (digitalRead(BUTTONS[0]) != 1 & startOn){
+      startsBlink();
+      randomizeLedStates();
+      gameOn = true;
+      startOn = false;
+    }
+  } 
+}
+
+
+void randomizeLedStates() {
+  for (int i = 0; i < numLeds; i++) {
+    randomSeed(analogRead(0));
+    ledState[i] = random(0, 2);
+  }
+}
+
+bool hasButtonStateChanged(bool currentState, int i) {
+  if (currentState != lastButtonState[i]) {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+void startNewLevel(){
+  gameOn = false;
+  score++;
+  Serial.print(score);
+  levelsBlink();
+  randomizeLedStates();
+  gameOn = true;
+}
+
+bool isDebounceDelayOver(int i) {
+  if (millis() - lastDebounceTime[i] > debounceDelay) {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+void refreshLeds(){
+  for (int i = 0; i < numLeds; i++) {
+    digitalWrite(LEDS[i], !ledState[i]);
+  }
+}
+
+bool checkLedsState(){
+  int totalLedsOn = 0;
+
+  for (int i = 0; i < numLeds; i++) {
+    totalLedsOn += ledState[i];
+  }
+
+  if (totalLedsOn == numLeds) {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+void LedsGame(){
   for (int i = 0; i < numLeds; i++) {
     bool isButtonPressed = !digitalRead(BUTTONS[i]);
     
@@ -72,55 +156,84 @@ void loop() {
 
     refreshLeds();
   }
+  if (checkLedsState()){
+    startNewLevel();
+  }
+  endTime = millis();
+  timePassed = endTime - startTime;
+  if (timePassed>=30000){
+    endGame();
+  }
 }
 
+void endGame(){
+  gameOn = false;
+  endsBlink();
+  displayScore();
+  score = 0;
+  startOn = true;
+}
 
-void randomizeLedStates() {
+void levelsBlink(){
+  for (int i = 0; i < 7; i++) {
+    for (int i = 0; i < numLeds; i++) {
+      ledState[i] = !ledState[i];
+    }
+    refreshLeds();
+    pause(150);
+  }
+}
+
+void startsBlink(){
+  resetLedsState();
+  for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < numLeds; i++) {
+      ledState[i] = !ledState[i];
+      refreshLeds();
+      pause(100);
+    }
+  }
+  startTime = millis();
+}
+
+void endsBlink(){
+  resetLedsState();
+  for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < numLeds; i++) {
+      ledState[i] = !ledState[i];
+    }
+    refreshLeds();
+    pause(750);
+  }
+}
+
+void displayScore(){
+  resetLedsState();
+  int currentScoreBit = 32;
+  int reste;
   for (int i = 0; i < numLeds; i++) {
-    randomSeed(analogRead(0));
-    ledState[i] = random(0, 2);
+    reste = score - currentScoreBit;
+    if (reste>=0){
+      ledState[i] = true;
+    }
+    else{
+      reste += currentScoreBit;
+    }
+    currentScoreBit = currentScoreBit/2;
   }
+  refreshLeds();
 }
 
-
-bool hasButtonStateChanged(bool currentState, int i) {
-  if (currentState != lastButtonState[i]) {
-    return true;
+void resetLedsState(){
+  for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < numLeds; i++) {
+      ledState[i] = false;
+    }
   }
-  else {
-    return false;
-  }
+  refreshLeds();
 }
 
-
-bool isDebounceDelayOver(int i) {
-  if (millis() - lastDebounceTime[i] > debounceDelay) {
-    return true;
-  }
-  else {
-    return false;
-  }
-}
-
-
-void refreshLeds(){
-  for (int i = 0; i < numLeds; i++) {
-    digitalWrite(LEDS[i], !ledState[i]);
-  }
-}
-
-
-bool checkLedsState(){
-  int totalLedsOn = 0;
-
-  for (int i = 0; i < numLeds; i++) {
-    totalLedsOn += ledState[i];
-  }
-
-  if (totalLedsOn == numLeds) {
-    return true;
-  }
-  else {
-    return false;
-  }
+void pause(float time){
+  float pauseTime = millis();
+  while (millis()-pauseTime < time){}
 }
