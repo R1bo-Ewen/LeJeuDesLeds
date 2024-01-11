@@ -14,13 +14,21 @@
 #define LED6 13
 #define numLeds 6
 
+#define FLAG1 0b00000001
+#define FLAG2 0b00000010
+#define FLAG3 0b00000100
+#define FLAG4 0b00001000
+#define FLAG5 0b00010000
+#define FLAG6 0b00100000
 
 const int BUTTONS[numLeds] = {BUTTON1, BUTTON2, BUTTON3, BUTTON4, BUTTON5, BUTTON6};
 const int LEDS[numLeds] = {LED1, LED2, LED3, LED4, LED5, LED6};
 
-bool ledState[numLeds];
-bool buttonState[numLeds];
-bool lastButtonState[numLeds];
+char ledState = 0;
+char buttonState = 0;
+char lastButtonState = 0;
+const char FLAGS[numLeds] = {FLAG1, FLAG2, FLAG3, FLAG4, FLAG5, FLAG6};
+
 bool gameOn = false;
 bool startOn = true;
 float startTime;
@@ -52,9 +60,9 @@ void setup() {
   for (int i = 0; i < numLeds; i++) {
     pinMode(BUTTONS[i], INPUT_PULLUP);
     pinMode(LEDS[i], OUTPUT);
-    lastButtonState[i] = false;
     lastDebounceTime[i] = 0;
   }
+  Serial.begin(9600);
 }
 
 
@@ -76,17 +84,19 @@ void loop() {
 void randomizeLedStates() {
   for (int i = 0; i < numLeds; i++) {
     randomSeed(analogRead(0));
-    ledState[i] = random(0, 2);
+    char newState = random(0, 2);
+    char newStateFlag = newState << i;
+
+    if (newState) {
+      // If new state is ON, write ledState with OR
+      ledState |= newStateFlag;
+    }
   }
 }
 
 bool hasButtonStateChanged(bool currentState, int i) {
-  if (currentState != lastButtonState[i]) {
-    return true;
-  }
-  else {
-    return false;
-  }
+  bool lastState = lastButtonState & FLAGS[i];
+  return !(currentState == lastState);
 }
 
 void startNewLevel(){
@@ -109,23 +119,14 @@ bool isDebounceDelayOver(int i) {
 
 void refreshLeds(){
   for (int i = 0; i < numLeds; i++) {
-    digitalWrite(LEDS[i], !ledState[i]);
+    bool state = ledState & FLAGS[i];
+    digitalWrite(LEDS[i], !state);
   }
 }
 
 bool checkLedsState(){
-  int totalLedsOn = 0;
-
-  for (int i = 0; i < numLeds; i++) {
-    totalLedsOn += ledState[i];
-  }
-
-  if (totalLedsOn == numLeds) {
-    return true;
-  }
-  else {
-    return false;
-  }
+  bool hasWon = (ledState == 0b00111111);
+  return hasWon;
 }
 
 void LedsGame(){
@@ -133,23 +134,29 @@ void LedsGame(){
     bool isButtonPressed = !digitalRead(BUTTONS[i]);
     
     if (hasButtonStateChanged(isButtonPressed, i) && isDebounceDelayOver(i)) {
-      lastButtonState[i] = isButtonPressed;
       lastDebounceTime[i] = millis();
 
       if (isButtonPressed) {
+        // Write 1
+        lastButtonState |= FLAGS[i];
+
         if(i == 0) {
-          ledState[0] = !ledState[0];
-          ledState[1] = !ledState[1];
+          ledState ^= FLAGS[i];
+          ledState ^= FLAGS[i+1];
         }
         else if (i == numLeds-1) {
-          ledState[numLeds-2] = !ledState[numLeds-2];
-          ledState[numLeds-1] = !ledState[numLeds-1];
+          ledState ^= FLAGS[numLeds-2];
+          ledState ^= FLAGS[numLeds-1];
         }
         else {
-          ledState[i-1] = !ledState[i-1];
-          ledState[i] = !ledState[i];
-          ledState[i+1] = !ledState[i+1];
+          ledState ^= FLAGS[i-1];
+          ledState ^= FLAGS[i];
+          ledState ^= FLAGS[i+1];
         }
+      }
+      else {
+        // Write 0
+        lastButtonState ^= FLAGS[i];
       }
     }
 
@@ -174,9 +181,10 @@ void endGame(){
 }
 
 void levelsBlink(){
-  for (int i = 0; i < 7; i++) {
-    for (int i = 0; i < numLeds; i++) {
-      ledState[i] = !ledState[i];
+  resetLedsState();
+  for (int i = 0; i < 6; i++) {
+    for (int j = 0; j < numLeds; j++) {
+      ledState ^= FLAGS[j];
     }
     refreshLeds();
     pause(150);
@@ -186,8 +194,8 @@ void levelsBlink(){
 void startsBlink(){
   resetLedsState();
   for (int i = 0; i < 3; i++) {
-    for (int i = 0; i < numLeds; i++) {
-      ledState[i] = !ledState[i];
+    for (int j = 0; j < numLeds; j++) {
+      ledState ^= FLAGS[j];
       refreshLeds();
       pause(100);
     }
@@ -196,10 +204,11 @@ void startsBlink(){
 }
 
 void endsBlink(){
-  resetLedsState();
+  // Probleme de blink 
+  // resetLedsState();
   for (int i = 0; i < 6; i++) {
-    for (int i = 0; i < numLeds; i++) {
-      ledState[i] = !ledState[i];
+    for (int j = 0; j < numLeds; j++) {
+      ledState ^= FLAGS[j];
     }
     refreshLeds();
     pause(750);
@@ -207,27 +216,15 @@ void endsBlink(){
 }
 
 void displayScore(){
+  // score a inverser
   resetLedsState();
-  int currentScoreBit = 32;
-  int reste;
-  for (int i = 0; i < numLeds; i++) {
-    reste = score - currentScoreBit;
-    if (reste>=0){
-      ledState[i] = true;
-    }
-    else{
-      reste += currentScoreBit;
-    }
-    currentScoreBit = currentScoreBit/2;
-  }
+  ledState = score;
   refreshLeds();
 }
 
 void resetLedsState(){
-  for (int i = 0; i < 3; i++) {
-    for (int i = 0; i < numLeds; i++) {
-      ledState[i] = false;
-    }
+  for (int j = 0; j < numLeds; j++) {
+    ledState ^= FLAGS[j];
   }
   refreshLeds();
 }
