@@ -1,5 +1,6 @@
 #include <Arduino.h>
 
+// Déclaration des variables des boutons et des leds aisnis que leur nombre
 #define BUTTON1 2
 #define BUTTON2 3
 #define BUTTON3 4
@@ -82,6 +83,8 @@ void loop() {
 
 
 void randomizeLedStates() {
+  // Function called at the beginning of every level,
+  // It attribute a random state to every light
   for (int i = 0; i < numLeds; i++) {
     randomSeed(analogRead(0));
     char newState = random(0, 2);
@@ -95,11 +98,14 @@ void randomizeLedStates() {
 }
 
 bool hasButtonStateChanged(bool currentState, int i) {
+  // Colin
   bool lastState = lastButtonState & FLAGS[i];
   return !(currentState == lastState);
 }
 
 void startNewLevel(){
+  // Function called when a player light all light,
+  // We're augmenting his score and restaring a new level
   gameOn = false;
   score++;
   Serial.print(score);
@@ -109,6 +115,7 @@ void startNewLevel(){
 }
 
 bool isDebounceDelayOver(int i) {
+  // Colin
   if (millis() - lastDebounceTime[i] > debounceDelay) {
     return true;
   }
@@ -118,6 +125,7 @@ bool isDebounceDelayOver(int i) {
 }
 
 void refreshLeds(){
+  // Fonction refreshing the visual feedback of the leds to their current value in the list 
   for (int i = 0; i < numLeds; i++) {
     bool state = ledState & FLAGS[i];
     digitalWrite(LEDS[i], !state);
@@ -125,19 +133,22 @@ void refreshLeds(){
 }
 
 bool checkLedsState(){
+  // Function checking if the all leds are activated and of so return true
   bool hasWon = (ledState == 0b00111111);
   return hasWon;
 }
 
 void LedsGame(){
+  // The main fuction the game
   for (int i = 0; i < numLeds; i++) {
     bool isButtonPressed = !digitalRead(BUTTONS[i]);
     
     if (hasButtonStateChanged(isButtonPressed, i) && isDebounceDelayOver(i)) {
+      // We check every button and if one is pressed we change the state of 
+      // it's light and to the ones next to it
       lastDebounceTime[i] = millis();
 
       if (isButtonPressed) {
-        // Write 1
         lastButtonState |= FLAGS[i];
 
         if(i == 0) {
@@ -163,8 +174,11 @@ void LedsGame(){
     refreshLeds();
   }
   if (checkLedsState()){
+    // Checking if the level is finished and if so, visualy informing the player
+    // And starting a new level 
     startNewLevel();
   }
+  // Checking if the time is out and ending the game if it's the case
   endTime = millis();
   timePassed = endTime - startTime;
   if (timePassed>=30000){
@@ -173,6 +187,7 @@ void LedsGame(){
 }
 
 void endGame(){
+  // Function ending the current game and letting the player start a new one
   gameOn = false;
   endsBlink();
   displayScore();
@@ -181,6 +196,7 @@ void endGame(){
 }
 
 void levelsBlink(){
+  // Function called in need of a visual feed back, used when a level is complet
   resetLedsState();
   for (int i = 0; i < 6; i++) {
     for (int j = 0; j < numLeds; j++) {
@@ -192,6 +208,7 @@ void levelsBlink(){
 }
 
 void startsBlink(){
+  // Function called in need of a visual feed back, used when a the player start a game
   resetLedsState();
   for (int i = 0; i < 3; i++) {
     for (int j = 0; j < numLeds; j++) {
@@ -204,8 +221,9 @@ void startsBlink(){
 }
 
 void endsBlink(){
-  // Probleme de blink 
-  // resetLedsState();
+  // Function called in need of a visual feed back, used when a the time is out
+  // and the game stoped
+  resetLedsState();
   for (int i = 0; i < 6; i++) {
     for (int j = 0; j < numLeds; j++) {
       ledState ^= FLAGS[j];
@@ -216,6 +234,7 @@ void endsBlink(){
 }
 
 void displayScore(){
+  // Function called in need of a visual feed back, used to show the score
   // score a inverser
   resetLedsState();
   ledState = score;
@@ -223,6 +242,10 @@ void displayScore(){
 }
 
 void resetLedsState(){
+  // Function called at the begging of all visual feedback,
+  // turning off all light
+  // besoin de savoir comment mettre toutes les lights en off 
+  // Colin
   for (int j = 0; j < numLeds; j++) {
     ledState ^= FLAGS[j];
   }
@@ -230,6 +253,7 @@ void resetLedsState(){
 }
 
 void pause(float time){
+  // Function to pause so the animation aren't too fast
   float pauseTime = millis();
   while (millis()-pauseTime < time){}
 }
