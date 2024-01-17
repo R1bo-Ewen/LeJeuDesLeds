@@ -67,6 +67,9 @@ void levelsBlink();
 void endsBlink();
 void displayScore();
 
+// Utility function
+int swapBits(int myByte);
+
 
 void setup() {
   for (int i = 0; i < numLeds; i++) {
@@ -259,6 +262,22 @@ void displayScore(){
   // Function called in need of a visual feed back, used to show the score
   // score a inverser
   resetLedsState();
-  ledState = score;
+  ledState = swapBits(score);
   refreshLeds();
+}
+
+int swapBits(int myByte){
+  // Swap the first 4 bits with the last 4 bits
+  myByte = ((myByte & 0b11110000) >> 4) | ((myByte & 0b00001111) << 4); //Now a = 0xEFGHABCD
+
+  // Next swap pairs of 2 bits
+  myByte = ((myByte & 0b11001100) >> 2) | ((myByte & 0b00110011) << 2); //Now a = 0xGHEFCDAB
+
+  // Finally, swap every other bit. 
+  myByte = ((myByte & 0b10101010) >> 1) | ((myByte & 0b01010101) << 1); //Now a = 0xHGFEDCBA
+
+  // Shifting to avoid missing leds
+  myByte = myByte >> (8 - int(numLeds));
+
+  return myByte;
 }
