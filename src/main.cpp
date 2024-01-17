@@ -43,7 +43,7 @@ bool startOn = true;
 float startTime;
 float endTime;
 float timePassed;
-int score;
+int score = 0;
 
 unsigned long lastDebounceTime[numLeds];
 const unsigned long debounceDelay = 50;
@@ -72,6 +72,7 @@ int swapBits(int myByte);
 
 
 void setup() {
+  Serial.begin(9600);
   for (int i = 0; i < numLeds; i++) {
     pinMode(BUTTONS[i], INPUT_PULLUP);
     pinMode(LEDS[i], OUTPUT);
@@ -134,6 +135,7 @@ void LedsGame(){
   if (checkLedsState()){
     // Checking if the level is finished and if so, visualy informing the player
     // And starting a new level 
+    score++;
     startNewLevel();
   }
   // Checking if the time is out and ending the game if it's the case
@@ -187,7 +189,6 @@ void startNewLevel(){
   // Function called when a player light all light,
   // We're augmenting his score and restaring a new level
   gameOn = false;
-  score++;
   Serial.print(score);
   levelsBlink();
   randomizeLedStates();
@@ -223,7 +224,7 @@ void resetLedsState(){
 void startsBlink(){
   // Function called in need of a visual feed back, used when a the player start a game
   resetLedsState();
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 4; i++) {
     for (int j = 0; j < numLeds; j++) {
       ledState ^= FLAGS[j];
       refreshLeds();
