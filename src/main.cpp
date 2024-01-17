@@ -73,6 +73,8 @@ int swapBits(int myByte);
 
 void setup() {
   Serial.begin(9600);
+  randomSeed(analogRead(0));
+  
   for (int i = 0; i < numLeds; i++) {
     pinMode(BUTTONS[i], INPUT_PULLUP);
     pinMode(LEDS[i], OUTPUT);
@@ -150,7 +152,6 @@ void randomizeLedStates() {
   // Function called at the beginning of every level,
   // It attribute a random state to every light
   for (int i = 0; i < numLeds; i++) {
-    randomSeed(analogRead(0));
     char newState = random(0, 2);
     char newStateFlag = newState << i;
 
