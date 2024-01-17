@@ -91,64 +91,7 @@ void loop() {
   } 
 }
 
-
-void randomizeLedStates() {
-  // Function called at the beginning of every level,
-  // It attribute a random state to every light
-  for (int i = 0; i < numLeds; i++) {
-    randomSeed(analogRead(0));
-    char newState = random(0, 2);
-    char newStateFlag = newState << i;
-
-    if (newState) {
-      // If new state is ON, write ledState with OR
-      ledState |= newStateFlag;
-    }
-  }
-}
-
-bool hasButtonStateChanged(bool currentState, int i) {
-  // Function checking if the button is pressed or not and returning
-  // True of False
-  bool lastState = lastButtonState & FLAGS[i];
-  return !(currentState == lastState);
-}
-
-void startNewLevel(){
-  // Function called when a player light all light,
-  // We're augmenting his score and restaring a new level
-  gameOn = false;
-  score++;
-  Serial.print(score);
-  levelsBlink();
-  randomizeLedStates();
-  gameOn = true;
-}
-
-bool isDebounceDelayOver(int i) {
-  // Function used to check if an infromation respect a certain time between
-  // two change of state. Used so the button don't get pressed twice
-  if (millis() - lastDebounceTime[i] > debounceDelay) {
-    return true;
-  }
-  else {
-    return false;
-  }
-}
-
-void refreshLeds(){
-  // Fonction refreshing the visual feedback of the leds to their current value in the list 
-  for (int i = 0; i < numLeds; i++) {
-    bool state = ledState & FLAGS[i];
-    digitalWrite(LEDS[i], !state);
-  }
-}
-
-bool checkLedsState(){
-  // Function checking if the all leds are activated and of so return true
-  bool hasWon = (ledState == 0b00111111);
-  return hasWon;
-}
+//---------------------Function for the Game----------------------------------//
 
 void LedsGame(){
   // The main fuction the game
@@ -198,6 +141,56 @@ void LedsGame(){
   }
 }
 
+void randomizeLedStates() {
+  // Function called at the beginning of every level,
+  // It attribute a random state to every light
+  for (int i = 0; i < numLeds; i++) {
+    randomSeed(analogRead(0));
+    char newState = random(0, 2);
+    char newStateFlag = newState << i;
+
+    if (newState) {
+      // If new state is ON, write ledState with OR
+      ledState |= newStateFlag;
+    }
+  }
+}
+
+bool hasButtonStateChanged(bool currentState, int i) {
+  // Function checking if the button is pressed or not and returning
+  // True of False
+  bool lastState = lastButtonState & FLAGS[i];
+  return !(currentState == lastState);
+}
+
+bool isDebounceDelayOver(int i) {
+  // Function used to check if an infromation respect a certain time between
+  // two change of state. Used so the button don't get pressed twice
+  if (millis() - lastDebounceTime[i] > debounceDelay) {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+bool checkLedsState(){
+  // Function checking if the all leds are activated and of so return true
+  bool hasWon = (ledState == 0b00111111);
+  return hasWon;
+}
+
+void startNewLevel(){
+  // Function called when a player light all light,
+  // We're augmenting his score and restaring a new level
+  gameOn = false;
+  score++;
+  Serial.print(score);
+  levelsBlink();
+  randomizeLedStates();
+  gameOn = true;
+}
+
 void endGame(){
   // Function ending the current game and letting the player start a new one
   gameOn = false;
@@ -207,14 +200,20 @@ void endGame(){
   startOn = true;
 }
 
+// -----------------Function for the visual feedback--------------------------//
+
+void refreshLeds(){
+  // Fonction refreshing the visual feedback of the leds to their current value in the list 
+  for (int i = 0; i < numLeds; i++) {
+    bool state = ledState & FLAGS[i];
+    digitalWrite(LEDS[i], !state);
+  }
+}
+
 void resetLedsState(){
   // Function called at the begging of all visual feedback,
   // turning off all light
-  // besoin de savoir comment mettre toutes les lights en off 
-  // Colin
-  for (int j = 0; j < numLeds; j++) {
-    ledState ^= FLAGS[j];
-  }
+  ledState = 0;
   refreshLeds();
 }
 
