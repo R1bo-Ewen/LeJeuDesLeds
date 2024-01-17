@@ -1,6 +1,7 @@
 #include <Arduino.h>
+#include <unistd.h>
 
-// Déclaration des variables des boutons et des leds aisnis que leur nombre
+// Déclaration des variables des boutons et des leds ainsi que leur nombre
 #define BUTTON1 2
 #define BUTTON2 3
 #define BUTTON3 4
@@ -41,20 +42,23 @@ unsigned long lastDebounceTime[numLeds];
 const unsigned long debounceDelay = 50;
 
 // put function declarations here:
+
+// Function for the game to work
+void LedsGame();
 void randomizeLedStates();
 bool hasButtonStateChanged(bool currentState, int i);
 bool isDebounceDelayOver(int i);
-void refreshLeds();
 bool checkLedsState();
-void LedsGame();
-void startsBlink();
 void startNewLevel();
+void endGame();
+
+// Function for the visual feedback
+void refreshLeds();
+void resetLedsState();
+void startsBlink();
 void levelsBlink();
 void endsBlink();
-void endGame();
 void displayScore();
-void resetLedsState();
-void pause(float time);
 
 
 void setup() {
@@ -63,7 +67,6 @@ void setup() {
     pinMode(LEDS[i], OUTPUT);
     lastDebounceTime[i] = 0;
   }
-  Serial.begin(9600);
 }
 
 
@@ -98,7 +101,8 @@ void randomizeLedStates() {
 }
 
 bool hasButtonStateChanged(bool currentState, int i) {
-  // Colin
+  // Function checking if the button is pressed or not and returning
+  // True of False
   bool lastState = lastButtonState & FLAGS[i];
   return !(currentState == lastState);
 }
@@ -115,7 +119,8 @@ void startNewLevel(){
 }
 
 bool isDebounceDelayOver(int i) {
-  // Colin
+  // Function used to check if an infromation respect a certain time between
+  // two change of state. Used so the button don't get pressed twice
   if (millis() - lastDebounceTime[i] > debounceDelay) {
     return true;
   }
@@ -195,52 +200,6 @@ void endGame(){
   startOn = true;
 }
 
-void levelsBlink(){
-  // Function called in need of a visual feed back, used when a level is complet
-  resetLedsState();
-  for (int i = 0; i < 6; i++) {
-    for (int j = 0; j < numLeds; j++) {
-      ledState ^= FLAGS[j];
-    }
-    refreshLeds();
-    pause(150);
-  }
-}
-
-void startsBlink(){
-  // Function called in need of a visual feed back, used when a the player start a game
-  resetLedsState();
-  for (int i = 0; i < 3; i++) {
-    for (int j = 0; j < numLeds; j++) {
-      ledState ^= FLAGS[j];
-      refreshLeds();
-      pause(100);
-    }
-  }
-  startTime = millis();
-}
-
-void endsBlink(){
-  // Function called in need of a visual feed back, used when a the time is out
-  // and the game stoped
-  resetLedsState();
-  for (int i = 0; i < 6; i++) {
-    for (int j = 0; j < numLeds; j++) {
-      ledState ^= FLAGS[j];
-    }
-    refreshLeds();
-    pause(750);
-  }
-}
-
-void displayScore(){
-  // Function called in need of a visual feed back, used to show the score
-  // score a inverser
-  resetLedsState();
-  ledState = score;
-  refreshLeds();
-}
-
 void resetLedsState(){
   // Function called at the begging of all visual feedback,
   // turning off all light
@@ -252,8 +211,48 @@ void resetLedsState(){
   refreshLeds();
 }
 
-void pause(float time){
-  // Function to pause so the animation aren't too fast
-  float pauseTime = millis();
-  while (millis()-pauseTime < time){}
+void startsBlink(){
+  // Function called in need of a visual feed back, used when a the player start a game
+  resetLedsState();
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < numLeds; j++) {
+      ledState ^= FLAGS[j];
+      refreshLeds();
+      delay(100);
+    }
+  }
+  startTime = millis();
+}
+
+void levelsBlink(){
+  // Function called in need of a visual feed back, used when a level is complet
+  resetLedsState();
+  for (int i = 0; i < 6; i++) {
+    for (int j = 0; j < numLeds; j++) {
+      ledState ^= FLAGS[j];
+    }
+    refreshLeds();
+    delay(150);
+  }
+}
+
+void endsBlink(){
+  // Function called in need of a visual feed back, used when a the time is out
+  // and the game stoped
+  resetLedsState();
+  for (int i = 0; i < 6; i++) {
+    for (int j = 0; j < numLeds; j++) {
+      ledState ^= FLAGS[j];
+    }
+    refreshLeds();
+    delay(750);
+  }
+}
+
+void displayScore(){
+  // Function called in need of a visual feed back, used to show the score
+  // score a inverser
+  resetLedsState();
+  ledState = score;
+  refreshLeds();
 }
